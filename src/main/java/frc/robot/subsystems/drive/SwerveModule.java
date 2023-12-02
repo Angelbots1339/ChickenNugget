@@ -2,6 +2,7 @@ package frc.robot.subsystems.drive;
 
 import com.ctre.phoenixpro.hardware.TalonFX;
 import com.reduxrobotics.sensors.canandcoder.Canandcoder;
+import com.reduxrobotics.sensors.canandcoder.CanandcoderSettings;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -21,6 +22,7 @@ public class SwerveModule {
         this.moveMotor = new TalonFX(config.moveCanId);
         this.rotationEncoder = new Canandcoder(config.canCoderId);
         this.pidController = new PIDController(0.0095, 0, 0);
+//        this.pidController = new PIDController(0.001, 0, 0);
 
         pidController.setTolerance(0.2, 30);
         pidController.enableContinuousInput(0, 360);
@@ -32,6 +34,14 @@ public class SwerveModule {
      */
     public void init() {
         this.rotationEncoder.clearStickyFaults();
+        CanandcoderSettings canandcoderSettings = this.rotationEncoder.getSettings()
+                .setInvertDirection(true);
+        this.rotationEncoder.setSettings(canandcoderSettings);
+
+        this.rotateMotor.clearStickyFaults();
+        this.rotateMotor.setInverted(true);
+        this.moveMotor.clearStickyFaults();
+        this.moveMotor.setInverted(false);
 
         SmartDashboard.putNumber("swt", desiredAngle);
 
@@ -47,12 +57,21 @@ public class SwerveModule {
 
             SmartDashboard.putNumber("swt", desiredAngle);
         }
+//        desiredAngle = state.angle.getDegrees();
+//        desiredAngle = 0;
+//        this.moveMotor.set(0.1 * Math.signum(state.speedMetersPerSecond));
+        this.moveMotor.set(0.1);
 
-        double actualAngle = this.rotationEncoder.getAbsPosition() * 360;
+        double absPosition = this.rotationEncoder.getAbsPosition();
+        double position = this.rotationEncoder.getPosition();
+        SmartDashboard.putNumber(config.name + " abs", absPosition);
+        SmartDashboard.putNumber(config.name + " pos", position);
+        double actualAngle = absPosition * 360;
         SmartDashboard.putNumber(config.name + " encoder", actualAngle);
+        SmartDashboard.putNumber(config.name + " desired", desiredAngle);
 
         double rotationPower = pidController.calculate(actualAngle, desiredAngle);
-        if(!pidController.atSetpoint()) {
+        if (!pidController.atSetpoint()) {
             this.rotateMotor.set(rotationPower);
         }
     }

@@ -1,6 +1,8 @@
 package frc.robot.subsystems;
 
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
+import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.subsystems.drive.SwerveConfiguration;
 import frc.robot.subsystems.drive.SwerveModule;
@@ -33,10 +35,12 @@ public class SwerveSubsystem extends SubsystemBase {
         backRight.init();
     }
 
-    public void apply(/* TODO Chassis speed object */) {
-        frontLeft.apply(null);
-        frontRight.apply(null);
-        backLeft.apply(null);
-        backRight.apply(null);
+    public void apply(ChassisSpeeds chassisSpeeds) {
+        // Returned SwerveModuleState array is in the same order as the locations passed into the SwerveDriveKinematics constructor
+        SwerveModuleState[] states = m_kinematics.toSwerveModuleStates(chassisSpeeds);
+        frontLeft.apply(states[0]);
+        frontRight.apply(states[1]);
+        backLeft.apply(states[2]);
+        backRight.apply(states[3]);
     }
 }

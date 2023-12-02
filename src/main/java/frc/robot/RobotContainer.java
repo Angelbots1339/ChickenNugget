@@ -4,6 +4,11 @@
 
 package frc.robot;
 
+import com.ctre.phoenixpro.hardware.Pigeon2;
+import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.Constants.OperatorConstants;
 import frc.robot.commands.Autos;
@@ -17,6 +22,8 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.subsystems.SwerveSubsystem;
 
+import java.util.function.Supplier;
+
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a
  * "declarative" paradigm, very little robot logic should actually be handled in the {@link Robot}
@@ -24,13 +31,15 @@ import frc.robot.subsystems.SwerveSubsystem;
  * subsystems, commands, and trigger mappings) should be declared here.
  */
 public class RobotContainer {
+    private final Pigeon2 pigeon2;
+
     // The robot's subsystems and commands are defined here...
     private final ExampleSubsystem m_exampleSubsystem = new ExampleSubsystem();
     private final SwerveSubsystem swerveSubsystem = new SwerveSubsystem();
 
     // Replace with CommandPS4Controller or CommandJoystick if needed
-//    private final CommandXboxController m_driverController =
-//            new CommandXboxController(OperatorConstants.kDriverControllerPort);
+    private final CommandXboxController m_driverController =
+            new CommandXboxController(OperatorConstants.kDriverControllerPort);
 
     /**
      * The container for the robot. Contains subsystems, OI devices, and commands.
@@ -38,14 +47,49 @@ public class RobotContainer {
     public RobotContainer() {
         // Configure the trigger bindings
         configureBindings();
+        pigeon2 = new Pigeon2(9);
+//        pigeon2.configMountPose(Pigeon2.AxisDirection.PositiveY, Pigeon2.AxisDirection.PositiveZ);
+        pigeon2.setYaw(0);
+
+        Supplier<Double> joystickRobotSpin = () -> {
+            double rightX = m_driverController.getRightX();
+            SmartDashboard.putNumber("right X", rightX);
+
+            return rightX;
+        };
+        Supplier<Rotation2d> robotHeadingAngle = () -> {
+            double yaw = pigeon2.getYaw().getValue();
+            while (yaw >= 360.0) {
+                yaw -= 360.0;
+            }
+            while (yaw <= 0) {
+                yaw += 360.0;
+            }
+            return Rotation2d.fromDegrees(yaw);
+        };
+        Supplier<Translation2d> joystickRobotMovement = () -> {
+            double x = MathUtil.applyDeadband(m_driverController.getLeftX(), 0.2);
+            double y = MathUtil.applyDeadband(-m_driverController.getLeftY(), 0.2);
+            SmartDashboard.putNumber("left X", x);
+            SmartDashboard.putNumber("left Y", y);
+            return new Translation2d(
+                    x,
+                    y
+            );
+        };
 
         // Set the DriveCommand to control the swerve subsystem by default, unless something else needs it.
         CommandScheduler.getInstance().setDefaultCommand(
                 swerveSubsystem,
-                new DriveCommand(swerveSubsystem)
+                new DriveCommand(
+                        swerveSubsystem,
+                        robotHeadingAngle,
+                        joystickRobotSpin,
+                        joystickRobotMovement
+                )
         );
 
-        // Initialize
+        // Initialize the robot
         (new RobotInitCommand(
                 swerveSubsystem
         )).execute();
