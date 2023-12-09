@@ -52,7 +52,7 @@ public class RobotContainer {
         pigeon2.setYaw(0);
 
         Supplier<Double> joystickRobotSpin = () -> {
-            double rightX = m_driverController.getRightX();
+            double rightX = -m_driverController.getRightX();
             SmartDashboard.putNumber("right X", rightX);
 
             return rightX;

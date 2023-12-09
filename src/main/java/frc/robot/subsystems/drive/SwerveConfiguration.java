@@ -5,31 +5,35 @@ import edu.wpi.first.math.geometry.Translation2d;
 public enum SwerveConfiguration {
     FRONT_LEFT(
             "FL",
-            new Translation2d(-0.18, 0.18),
+            new Translation2d(0.18, 0.18),
             5,
             2,
-            6
+            6,
+            0
     ),
     FRONT_RIGHT(
             "FR",
-            new Translation2d(0.18, 0.18),
+            new Translation2d(0.18, -0.18),
             12,
             20,
-            8
+            8,
+            0
     ),
     BACK_LEFT(
             "BL",
-            new Translation2d(-0.18, -0.18),
+            new Translation2d(-0.18, 0.18),
             7,
             18,
-            3
+            3,
+            0
     ),
     BACK_RIGHT(
             "BR",
-            new Translation2d(0.18, -0.18),
+            new Translation2d(-0.18, -0.18),
             13,
             19,
-            4
+            4,
+            0
     );
 
     // If gears face inward on wheels at offset, then move motion should be inverted for left from right
@@ -39,18 +43,21 @@ public enum SwerveConfiguration {
     public final int moveCanId;
     public final int rotateCanId;
     public final int canCoderId;
+    public final double magneticOffset;
 
     SwerveConfiguration(
             String name,
             Translation2d position,
             int moveCanId,
             int rotateCanId,
-            int CANCoderId
+            int CANCoderId,
+            double magneticOffset
     ) {
         this.name = name;
         this.position = position;
         this.moveCanId = moveCanId;
         this.rotateCanId = rotateCanId;
         this.canCoderId = CANCoderId;
+        this.magneticOffset = magneticOffset;
     }
 }

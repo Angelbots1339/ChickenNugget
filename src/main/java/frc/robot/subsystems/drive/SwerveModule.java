@@ -1,28 +1,26 @@
 package frc.robot.subsystems.drive;
 
+import com.ctre.phoenixpro.configs.MagnetSensorConfigs;
+import com.ctre.phoenixpro.hardware.CANcoder;
 import com.ctre.phoenixpro.hardware.TalonFX;
-import com.reduxrobotics.sensors.canandcoder.Canandcoder;
-import com.reduxrobotics.sensors.canandcoder.CanandcoderSettings;
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class SwerveModule {
     public final SwerveConfiguration config;
-    private final TalonFX rotateMotor;
-    private final TalonFX moveMotor;
-    private final Canandcoder rotationEncoder;
-    private final PIDController pidController;
-    private double desiredAngle = 0;
-    private int count = 0;
+    public final TalonFX rotateMotor;
+    public final TalonFX moveMotor;
+    public final CANcoder rotationEncoder;
+    public final PIDController pidController;
 
     public SwerveModule(SwerveConfiguration config) {
         this.config = config;
         this.rotateMotor = new TalonFX(config.rotateCanId);
         this.moveMotor = new TalonFX(config.moveCanId);
-        this.rotationEncoder = new Canandcoder(config.canCoderId);
+        this.rotationEncoder = new CANcoder(config.canCoderId);
         this.pidController = new PIDController(0.0095, 0, 0);
-//        this.pidController = new PIDController(0.001, 0, 0);
 
         pidController.setTolerance(0.2, 30);
         pidController.enableContinuousInput(0, 360);
@@ -34,41 +32,33 @@ public class SwerveModule {
      */
     public void init() {
         this.rotationEncoder.clearStickyFaults();
-        CanandcoderSettings canandcoderSettings = this.rotationEncoder.getSettings()
-                .setInvertDirection(true);
-        this.rotationEncoder.setSettings(canandcoderSettings);
+        MagnetSensorConfigs magnetSensorConfigs = new MagnetSensorConfigs();
+        this.rotationEncoder.getConfigurator()
+                .refresh(magnetSensorConfigs);
+        magnetSensorConfigs.MagnetOffset = config.magneticOffset;
+        this.rotationEncoder.getConfigurator().apply(magnetSensorConfigs);
 
         this.rotateMotor.clearStickyFaults();
         this.rotateMotor.setInverted(true);
         this.moveMotor.clearStickyFaults();
         this.moveMotor.setInverted(false);
 
-        SmartDashboard.putNumber("swt", desiredAngle);
-
         pidController.reset();
     }
 
     public void apply(SwerveModuleState state) {
-        count++;
-        if (count >= 500) { // 10 seconds
-            count = 0;
-            this.pidController.reset();
-            desiredAngle = (desiredAngle + 90) % 360;
 
-            SmartDashboard.putNumber("swt", desiredAngle);
-        }
-//        desiredAngle = state.angle.getDegrees();
-//        desiredAngle = 0;
-//        this.moveMotor.set(0.1 * Math.signum(state.speedMetersPerSecond));
-        this.moveMotor.set(0.1);
+        double desiredAngle = state.angle.getDegrees();
+        this.moveMotor.set(state.speedMetersPerSecond);  // TODO Convert this to actual speed
 
-        double absPosition = this.rotationEncoder.getAbsPosition();
-        double position = this.rotationEncoder.getPosition();
+        double absPosition = this.rotationEncoder.getAbsolutePosition().getValue();
         SmartDashboard.putNumber(config.name + " abs", absPosition);
-        SmartDashboard.putNumber(config.name + " pos", position);
         double actualAngle = absPosition * 360;
         SmartDashboard.putNumber(config.name + " encoder", actualAngle);
         SmartDashboard.putNumber(config.name + " desired", desiredAngle);
+
+
+        state = SwerveModuleState.optimize(state, Rotation2d.fromDegrees(actualAngle));
 
         double rotationPower = pidController.calculate(actualAngle, desiredAngle);
         if (!pidController.atSetpoint()) {

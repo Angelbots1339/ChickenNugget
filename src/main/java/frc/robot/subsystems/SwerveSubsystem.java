@@ -28,6 +28,16 @@ public class SwerveSubsystem extends SubsystemBase {
         );
     }
 
+    /**
+     * Return a list of SwerveModules used in this subsystem. Used in the swerve setup code when we want to talk to
+     * the modules directly instead of going through a ChassisSpeeds object.
+     *
+     * @return The swerve modules in the same order they were passed into m_kinematics.
+     */
+    public SwerveModule[] getModules() {
+        return new SwerveModule[]{frontLeft, frontRight, backLeft, backRight};
+    }
+
     public void init() {
         frontLeft.init();
         frontRight.init();
