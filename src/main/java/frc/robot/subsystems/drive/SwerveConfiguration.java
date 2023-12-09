@@ -9,7 +9,7 @@ public enum SwerveConfiguration {
             5,
             2,
             6,
-            0
+            -0.382813
     ),
     FRONT_RIGHT(
             "FR",
@@ -17,7 +17,7 @@ public enum SwerveConfiguration {
             12,
             20,
             8,
-            0
+            -0.038330
     ),
     BACK_LEFT(
             "BL",
@@ -25,7 +25,7 @@ public enum SwerveConfiguration {
             7,
             18,
             3,
-            0
+            -0.574951
     ),
     BACK_RIGHT(
             "BR",
@@ -33,7 +33,7 @@ public enum SwerveConfiguration {
             13,
             19,
             4,
-            0
+            -0.371094
     );
 
     // If gears face inward on wheels at offset, then move motion should be inverted for left from right

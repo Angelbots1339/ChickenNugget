@@ -3,6 +3,8 @@ package frc.robot.subsystems.drive;
 import com.ctre.phoenixpro.configs.MagnetSensorConfigs;
 import com.ctre.phoenixpro.hardware.CANcoder;
 import com.ctre.phoenixpro.hardware.TalonFX;
+import com.ctre.phoenixpro.signals.AbsoluteSensorRangeValue;
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
@@ -20,9 +22,10 @@ public class SwerveModule {
         this.rotateMotor = new TalonFX(config.rotateCanId);
         this.moveMotor = new TalonFX(config.moveCanId);
         this.rotationEncoder = new CANcoder(config.canCoderId);
-        this.pidController = new PIDController(0.0095, 0, 0);
 
-        pidController.setTolerance(0.2, 30);
+        this.pidController = new PIDController(0.0095, 0, 0.00015);
+//
+        pidController.setTolerance(0.2);
         pidController.enableContinuousInput(0, 360);
     }
 
@@ -36,6 +39,8 @@ public class SwerveModule {
         this.rotationEncoder.getConfigurator()
                 .refresh(magnetSensorConfigs);
         magnetSensorConfigs.MagnetOffset = config.magneticOffset;
+        magnetSensorConfigs.AbsoluteSensorRange = AbsoluteSensorRangeValue.Unsigned_0To1;
+
         this.rotationEncoder.getConfigurator().apply(magnetSensorConfigs);
 
         this.rotateMotor.clearStickyFaults();
@@ -47,20 +52,21 @@ public class SwerveModule {
     }
 
     public void apply(SwerveModuleState state) {
-
-        double desiredAngle = state.angle.getDegrees();
-        this.moveMotor.set(state.speedMetersPerSecond);  // TODO Convert this to actual speed
-
         double absPosition = this.rotationEncoder.getAbsolutePosition().getValue();
-        SmartDashboard.putNumber(config.name + " abs", absPosition);
         double actualAngle = absPosition * 360;
-        SmartDashboard.putNumber(config.name + " encoder", actualAngle);
-        SmartDashboard.putNumber(config.name + " desired", desiredAngle);
-
 
         state = SwerveModuleState.optimize(state, Rotation2d.fromDegrees(actualAngle));
 
+        double desiredAngle = state.angle.getDegrees();
+
+        double movePower = MathUtil.clamp(state.speedMetersPerSecond, -1, 1);
+        this.moveMotor.set(movePower);  // TODO Convert this to actual speed
+
+
         double rotationPower = pidController.calculate(actualAngle, desiredAngle);
+
+        rotationPower = MathUtil.clamp(rotationPower, -1, 1);
+
         if (!pidController.atSetpoint()) {
             this.rotateMotor.set(rotationPower);
         }

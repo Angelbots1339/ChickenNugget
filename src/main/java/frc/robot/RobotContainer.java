@@ -15,6 +15,7 @@ import frc.robot.commands.Autos;
 import frc.robot.commands.DriveCommand;
 import frc.robot.commands.ExampleCommand;
 import frc.robot.commands.RobotInitCommand;
+import frc.robot.commands.swervesetup.*;
 import frc.robot.subsystems.ExampleSubsystem;
 
 import edu.wpi.first.wpilibj2.command.Command;
@@ -48,15 +49,10 @@ public class RobotContainer {
         // Configure the trigger bindings
         configureBindings();
         pigeon2 = new Pigeon2(9);
-//        pigeon2.configMountPose(Pigeon2.AxisDirection.PositiveY, Pigeon2.AxisDirection.PositiveZ);
         pigeon2.setYaw(0);
 
-        Supplier<Double> joystickRobotSpin = () -> {
-            double rightX = -m_driverController.getRightX();
-            SmartDashboard.putNumber("right X", rightX);
+        Supplier<Double> joystickRobotSpin = () -> MathUtil.applyDeadband(-m_driverController.getRightX(), 0.1);
 
-            return rightX;
-        };
         Supplier<Rotation2d> robotHeadingAngle = () -> {
             double yaw = pigeon2.getYaw().getValue();
             while (yaw >= 360.0) {
@@ -67,21 +63,24 @@ public class RobotContainer {
             }
             return Rotation2d.fromDegrees(yaw);
         };
-        Supplier<Translation2d> joystickRobotMovement = () -> {
-            double x = MathUtil.applyDeadband(m_driverController.getLeftX(), 0.2);
-            double y = MathUtil.applyDeadband(-m_driverController.getLeftY(), 0.2);
-            SmartDashboard.putNumber("left X", x);
-            SmartDashboard.putNumber("left Y", y);
-            return new Translation2d(
-                    x,
-                    y
-            );
-        };
+        Supplier<Translation2d> joystickRobotMovement = () -> new Translation2d(
+                MathUtil.applyDeadband(-m_driverController.getLeftY(), 0.1),
+                MathUtil.applyDeadband(-m_driverController.getLeftX(), 0.1)
+        );
 
         // Set the DriveCommand to control the swerve subsystem by default, unless something else needs it.
+//        CommandScheduler.getInstance().setDefaultCommand(
+//                swerveSubsystem,
+//                new DriveCommand(
+//                        swerveSubsystem,
+//                        robotHeadingAngle,
+//                        joystickRobotSpin,
+//                        joystickRobotMovement
+//                )
+//        );
         CommandScheduler.getInstance().setDefaultCommand(
                 swerveSubsystem,
-                new DriveCommand(
+                new Step6TuningSpeed(
                         swerveSubsystem,
                         robotHeadingAngle,
                         joystickRobotSpin,

@@ -73,16 +73,16 @@ public class Step2RotationTuning extends CommandBase {
 
     @Override
     public void execute() {
+        SmartDashboard.putNumber("Desired Angle", desiredAngle);
+
         counter++;
         if (counter >= PAUSE_COUNT) { // 10 seconds
             counter = 0;
             desiredAngle = (desiredAngle + 90) % 360;
-
-            SmartDashboard.putNumber("Desired Angle", desiredAngle);
         }
 
         for (SwerveModule module : swerveSubsystem.getModules()) {
-            SmartDashboard.putNumber(module.config.name + " rotation", module.rotationEncoder.getAbsolutePosition().getValue());
+            SmartDashboard.putNumber(module.config.name + " rotation", module.rotationEncoder.getAbsolutePosition().getValue() * 360);
 
             // Make each module move forward slowly, so you can determine the direction
             module.apply(new SwerveModuleState(0.1, Rotation2d.fromDegrees(desiredAngle)));
