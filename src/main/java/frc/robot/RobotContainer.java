@@ -38,6 +38,8 @@ public class RobotContainer {
     private final ExampleSubsystem m_exampleSubsystem = new ExampleSubsystem();
     private final SwerveSubsystem swerveSubsystem = new SwerveSubsystem();
 
+    private final DriveCommand driveCommand;
+
     // Replace with CommandPS4Controller or CommandJoystick if needed
     private final CommandXboxController m_driverController =
             new CommandXboxController(OperatorConstants.kDriverControllerPort);
@@ -68,30 +70,20 @@ public class RobotContainer {
                 MathUtil.applyDeadband(-m_driverController.getLeftX(), 0.1)
         );
 
-        // Set the DriveCommand to control the swerve subsystem by default, unless something else needs it.
-//        CommandScheduler.getInstance().setDefaultCommand(
-//                swerveSubsystem,
-//                new DriveCommand(
-//                        swerveSubsystem,
-//                        robotHeadingAngle,
-//                        joystickRobotSpin,
-//                        joystickRobotMovement
-//                )
-//        );
-        CommandScheduler.getInstance().setDefaultCommand(
+        driveCommand = new DriveCommand(
                 swerveSubsystem,
-                new Step6TuningSpeed(
-                        swerveSubsystem,
-                        robotHeadingAngle,
-                        joystickRobotSpin,
-                        joystickRobotMovement
-                )
+                robotHeadingAngle,
+                joystickRobotSpin,
+                joystickRobotMovement
         );
+
+        // Set the DriveCommand to control the swerve subsystem by default, unless something else needs it.
+        swerveSubsystem.setDefaultCommand(driveCommand);
 
         // Initialize the robot
         (new RobotInitCommand(
                 swerveSubsystem
-        )).execute();
+        )).schedule();
     }
 
     /**
