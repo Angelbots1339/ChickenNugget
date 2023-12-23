@@ -11,7 +11,6 @@ import frc.robot.subsystems.SwerveSubsystem;
  * robot.
  */
 public class RobotInitCommand extends CommandBase {
-    private boolean isFinished = false;
     private final SwerveSubsystem swerveSubsystem;
 
     public RobotInitCommand(
@@ -23,13 +22,12 @@ public class RobotInitCommand extends CommandBase {
 
     @Override
     public boolean isFinished() {
-        return isFinished;
+        return true;  // Execute always runs once, so it's safe to just always assume we're finished
     }
 
     @Override
     public void execute() {
         swerveSubsystem.init();
-        isFinished = true;
     }
 
     /**
